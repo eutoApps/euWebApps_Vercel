@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instant Bible Concordance</title>
+  <meta name="description" content="Instant Concordance Bible - Automatically display relevant Bible verses as you type. No need to press Enter or click to navigate through pages. See all relevant verses on one page instantly.">
+  <meta name="keywords" content="Bible concordance, instant search Bible, Bible keyword search, real-time Bible search, Bible study tool">
+  <meta name="author" content="Eric Utomo">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,8 +16,8 @@
       padding: 10px;
       border: 1px solid #ccc;
       width: 50%;
-      margin: 0 auto; /* Centers the element horizontally */
-      display: block; /* Ensures the element behaves like a block for proper centering */
+      margin: 0 auto;
+      display: block;
       box-sizing: border-box;
     }
     #content {
@@ -37,7 +40,6 @@
   <div id="content"></div>
 
   <script>
-    // Declare a variable to hold the Bible data
     let bibleText = [];
 
     // Function to render verses
@@ -55,7 +57,7 @@
     // Function to load the Bible JSON file
     const loadBibleData = async () => {
       try {
-        const response = await fetch('BereanBibleText_complete.json'); // Fetch the JSON file
+        const response = await fetch('BereanBibleText_complete.json');
         if (!response.ok) {
           throw new Error('Failed to load Bible data');
         }
