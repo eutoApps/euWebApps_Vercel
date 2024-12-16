@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eutoApps Web Apps</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      width: 50%;
+      margin: auto;
+      text-align: center;
+    }
+
+    .link-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .link-container a {
+      display: inline-block;
+      padding: 15px 20px;
+      text-decoration: none;
+      font-size: 1.5rem; /* Large, readable font size */
+      color: white;
+      border-radius: 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      flex: 1 1 calc(50% - 20px); /* Adjust to fit dynamically */
+      text-align: center;
+    }
+
+    /* Assigning unique colors */
+    .link-container a:nth-child(1) {
+      background-color: #4CAF50; /* Green */
+    }
+    .link-container a:nth-child(2) {
+      background-color: #2196F3; /* Blue */
+    }
+    .link-container a:nth-child(3) {
+      background-color: #FF5722; /* Orange */
+    }
+    .link-container a:nth-child(4) {
+      background-color: #9C27B0; /* Purple */
+    }
+    .link-container a:nth-child(5) {
+      background-color: #FFC107; /* Yellow */
+      color: black; /* Black text for readability */
+    }
+
+    /* Hover effect */
+    .link-container a:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .link-container a {
+        flex: 1 1 100%; /* Full width on smaller screens */
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>eutoApps Web Apps</h1>
+  <div class="link-container">
+    <a href="/Concordance/InstantOnePageBibleConcordance.htm">Instant One-Page Concordance</a>
+    <a href="/WritePad/WritePad.htm">WritePad</a>
+    <!-- Add more links below and the layout will automatically adjust -->
+  </div>
+</body>
+</html>
