@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Utomo's WritePad</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: black;
+        }
+        #toolbar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: black;
+            height: 40px;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .color-btn {
+            flex-grow: 1;
+            height: 100%;
+            border: none;
+            cursor: pointer;
+        }
+        #canvas {
+            flex-grow: 1;
+            display: block;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="toolbar">
+        <button id="clear" class="color-btn" style="background-color: white;">CLEAR</button>
+        <button class="color-btn" style="background-color: black;" onclick="changeColor('black')"></button>
+        <button class="color-btn" style="background-color: white;" onclick="changeColor('white')"></button>
+        <button class="color-btn" style="background-color: brown;" onclick="changeColor('brown')"></button>
+        <button class="color-btn" style="background-color: green;" onclick="changeColor('green')"></button>
+        <button class="color-btn" style="background-color: lightblue;" onclick="changeColor('lightblue')"></button>
+        <button class="color-btn" style="background-color: orange;" onclick="changeColor('orange')"></button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 40; // Account for toolbar height
+
+        let drawing = false;
+        let color = 'white';
+        let lineWidth = 5;
+
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY); // Adjust for toolbar height
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!drawing) return;
+
+            if (color === 'black') {
+                ctx.lineWidth = 40; // Eraser thickness
+            } else {
+                ctx.lineWidth = lineWidth;
+            }
+
+            ctx.lineTo(e.clientX, e.clientY); // Adjust for toolbar height
+            ctx.strokeStyle = color;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            drawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            drawing = false;
+        });
+
+        document.getElementById('clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            color = 'white';
+        });
+
+        function changeColor(newColor) {
+            color = newColor;
+        }
+
+        // Resize canvas when the window is resized
+        window.addEventListener('resize', () => {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 40;
+            ctx.putImageData(imgData, 0, 0);
+        });
+    </script>
+</body>
+</html>
