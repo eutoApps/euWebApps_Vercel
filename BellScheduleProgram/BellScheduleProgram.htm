@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabernacle Bell Program</title>
+  <style>
+    /* Global styles */
+  body {
+    font-family: "Arial", sans-serif;
+    background-color: #e9f0f7;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    overflow: hidden; /* Prevent body scrolling */
+  }
+
+  h1 {
+    color: #0066cc;
+    padding: 10px;
+    width: 100%;
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Container for holding all frames */
+  .container {
+    display: flex;
+    justify-content: space-around;
+    width: 90%;
+    max-width: 1200px;
+    gap: 20px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    
+  }
+
+  /* Each frame styling */
+  .frame {
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 20px;
+    width: 30%;
+    min-width: 250px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .frame h2 {
+    font-size: 1.4rem;
+    color: #004d99;
+    margin-bottom: 15px;
+  }
+
+  /* Schedule buttons */
+  .button {
+    margin: 5px 0;
+    padding: 12px 20px;
+    background-color: #0066cc;
+    width:150px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .button:hover {
+    background-color: #004d99;
+  }
+
+  /* Time slots (the 24 boxes) */
+  .time-slot {
+    margin: 2px;
+    padding: 5px;
+    width: 100%;
+    max-width: 80px;
+    font-size: 1rem;
+    border: 1px solid #0078d7;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #f0f8ff;
+    transition: background-color 0.3s;
+  }
+
+  .time-slot:focus {
+    background-color: #e1efff;
+    outline: none;
+  }
+
+  /* Grid layout for time slots (2 columns, with scroll) */
+  #time-slots {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columns */
+    grid-gap: 5px;
+    justify-items: center;
+    margin-top: 0px;
+    width: 100%;
+    max-height: 300px; /* Adjust this to the desired height */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }
+
+  /* Status indicator */
+  .status {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 20px;
+  }
+
+  /* Smaller responsive styles for smaller screens */
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+      align-items: center;
+      max-height: none; /* Allow container to take more space on smaller screens */
+    }
+    .frame {
+      width: 80%;
+      margin-bottom: 20px;
+    }
+    #time-slots {
+      grid-template-columns: 1fr; /* One column on small screens */
+    }
+  }
+
+</style>
+
+
+</head>
+<body>
+  <h1>Tabernacle Bell Program</h1>
+  <div class="container">
+
+    <!-- Left hand Frame-->
+    <div class="frame">
+      <h2>Schedule</h2>
+      <button class="button" onclick="loadSchedule('Default')">Monday-Thursday</button>
+      <button class="button" onclick="loadSchedule('Chapel')">Chapel</button>
+      <button class="button" onclick="loadSchedule('Minimum Day')">Minimum Day</button>
+      <button class="button" onclick="loadSchedule('Extra 1')">Extra 1</button>
+      <button class="button" onclick="loadSchedule('Extra 2')">Extra 2</button>
+    </div>
+      
+    <!--The middle Frame-->
+    <div class="frame">
+      <h2 id="current-schedule">Default</h2>
+      <div id="time-slots" class="container"></div>
+    </div>
+
+    <!--Right hand Frame-->
+    <div class="frame">
+      <h2>Actions</h2>
+      <button class="button" onclick="startSchedule()">Start</button>
+      <button class="button" onclick="stopSchedule()">Stop</button>
+      <button class="button" onclick="saveSchedule()">Save</button>
+      <p>Status: <span id="status" class="status" style="color:red;">Off</span></p>
+      <h2>Audio</h2>
+      <button class="button" onclick="playSound()">Ring x1</button>
+    </div>
+  </div>
+
+  <script>
+    let schedule = [];
+    let intervalId = null;
+    const defaultSchedule = Array(24).fill("").map((_, i) => i.toString().padStart(2, "0") + "00");
+    const timeSlotsDiv = document.getElementById("time-slots");
+    const statusSpan = document.getElementById("status");
+    const currentScheduleSpan = document.getElementById("current-schedule");
+
+    // Initialize time slots
+    function initTimeSlots() {
+      timeSlotsDiv.innerHTML = "";
+      for (let i = 0; i < 24; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "time-slot";
+        input.value = schedule[i] || "";
+        input.id = `time-slot-${i}`;
+        timeSlotsDiv.appendChild(input);
+      }
+    }
+
+    // Load a schedule
+    function loadSchedule(type) {
+      schedule = JSON.parse(localStorage.getItem(type)) || defaultSchedule;
+      currentScheduleSpan.textContent = type;
+      initTimeSlots();
+    }
+
+    // Save the current schedule
+    function saveSchedule() {
+      const type = currentScheduleSpan.textContent;
+      schedule = [];
+      for (let i = 0; i < 24; i++) {
+        const value = document.getElementById(`time-slot-${i}`).value.trim();
+        schedule.push(value);
+      }
+      localStorage.setItem(type, JSON.stringify(schedule));
+      alert("Schedule saved!");
+    }
+
+    function startSchedule() {
+      if (intervalId) return; // Prevent multiple intervals from running
+      statusSpan.style.color = "green";
+      statusSpan.textContent = "On";
+    
+      // Immediately check if the current time matches any scheduled time
+      const now = new Date();
+      const currentTime = now.getHours().toString().padStart(2, "0") + now.getMinutes().toString().padStart(2, "0");
+    
+      schedule.forEach((time) => {
+        if (time.trim() === currentTime) { // Ring the bell immediately at the exact second
+          playSound();
+        }
+      });
+    
+      // Start checking every second after clicking Start
+      intervalId = setInterval(() => {
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, "0") + now.getMinutes().toString().padStart(2, "0");
+    
+        // Check if the current time matches any scheduled time and ring the bell exactly when the time changes
+        schedule.forEach((time) => {
+          if (time.trim() === currentTime && now.getSeconds() === 0) {
+              //the === 0 is to ring the sound at the exact second that the minute changes (hr:min:59 to new minute)
+            playSound();
+          }
+        });
+      }, 1000); // Check every second
+    }
+
+    // Stop ringing the bell
+    function stopSchedule() {
+      if (!intervalId) return;
+      clearInterval(intervalId);
+      intervalId = null;
+      statusSpan.style.color = "red";
+      statusSpan.textContent = "Off";
+    }
+
+    // Play a sound
+      function playSound() {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          oscillator.type = 'sine'; // Sine wave
+          oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // 440 Hz
+          oscillator.connect(audioCtx.destination);
+          oscillator.start();
+          setTimeout(() => oscillator.stop(), 1000); // Play sound for 1 second
+      }
+
+    // Initialize with default schedule
+    loadSchedule("Default");
+  </script>
+</body>
+</html>
