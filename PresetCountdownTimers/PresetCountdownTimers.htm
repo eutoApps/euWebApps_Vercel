@@ -1,0 +1,165 @@
+<!--This program is a list of 5 pre-set timers, ready to start
+counting down at the click of a button.
+
+Created December 2024 by Eric Utomo-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timers</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: #f8f9fa; /* Light gray background */
+            color: #333; /* Darker text color */
+        }
+
+        #timer-display {
+            font-size: 7rem; /* Bigger font size for the timer */
+            font-weight: bold;
+            color: #2c3e50; /* Dark blue-gray */
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 220px; /* Set a fixed width for container */
+        }
+
+        button, input {
+            font-size: 1rem;
+            padding: 8px 15px; /* Smaller buttons */
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db; /* Bright blue buttons */
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 250px;
+        }
+
+        button:hover {
+            background-color: #2980b9; /* Slightly darker blue on hover */
+            transform: scale(1.05); /* Slight button pop on hover */
+        }
+
+        button:active {
+            transform: scale(0.95); /* Button press effect */
+        }
+
+        input {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 8px;
+            width: 235px; /* Full width */
+            text-align: center;
+        }
+
+        .pause-button {
+            margin-top: 20px;
+            background-color: #e67e22; /* Orange for the pause/resume button */
+        }
+
+        .pause-button:hover {
+            background-color: #d35400; /* Darker orange on hover */
+        }
+
+        .pause-button:active {
+            transform: scale(0.95);
+        }
+
+        .custom-minutes {
+        color:white;
+            }
+    </style>
+</head>
+<body>
+    <h1>Countdown Timers</h1>
+    <div id="timer-display">00:00</div>
+    <div class="buttons-container">
+        <button onclick="startTimer(1)">1 Minute</button>
+        <button onclick="startTimer(5)">5 Minutes</button>
+        <button onclick="startTimer(10)">10 Minutes</button>
+        <button onclick="startTimer(15)">15 Minutes</button>
+        <div>
+            <input type="number" id="custom-minutes" placeholder="Custom Minutes" min="1">
+        </div>
+    </div>
+    <button class="pause-button" id="pause-resume-btn" onclick="togglePause()">Click Above</button>
+
+    <script>
+        let countdownInterval;
+        let timeRemaining = 0;
+        let isPaused = false;
+
+        function startTimer(minutes) {
+            clearInterval(countdownInterval);
+            isPaused = false;
+            timeRemaining = minutes * 60; // Convert minutes to seconds
+
+            document.getElementById('pause-resume-btn').style.display = 'block';
+            document.getElementById('pause-resume-btn').textContent = 'Pause';
+
+            function updateDisplay() {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                document.getElementById('timer-display').textContent =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeRemaining === 0) {
+                    clearInterval(countdownInterval);
+                    alert("Time's up!");
+                    document.getElementById('pause-resume-btn').style.display = 'none';
+                } else if (!isPaused) {
+                    timeRemaining--;
+                }
+            }
+
+            updateDisplay();
+            countdownInterval = setInterval(updateDisplay, 1000);
+        }
+
+        function startCustomTimer() {
+            const customMinutes = document.getElementById('custom-minutes').value;
+            if (customMinutes && customMinutes > 0) {
+                startTimer(parseInt(customMinutes));
+            } else {
+                alert("Please enter a valid number of minutes.");
+            }
+        }
+
+        function togglePause() {
+            const pauseResumeBtn = document.getElementById('pause-resume-btn');
+            if (isPaused) {
+                // Resume timer
+                isPaused = false;
+                pauseResumeBtn.textContent = 'Pause';
+            } else {
+                // Pause timer
+                isPaused = true;
+                pauseResumeBtn.textContent = 'Resume';
+            }
+        }
+
+        // Trigger custom timer when Enter is pressed
+        document.getElementById('custom-minutes').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                startCustomTimer();
+            }
+        });
+    </script>
+</body>
+</html>
