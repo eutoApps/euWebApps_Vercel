@@ -1,24 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instant Bible Concordance</title>
-  <meta name="description" content="Instant Concordance Bible - Automatically display relevant Bible verses as you type. No need to press Enter or click to navigate through pages. See all relevant verses on one page instantly.">
-  <meta name="keywords" content="Bible concordance, instant search Bible, Bible keyword search, real-time Bible search, Bible study tool">
-  <meta name="author" content="Eric Utomo">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eric's Concordance Bible App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 0;
     }
-    #search-bar {
+    .search-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      width: 50%;
+      margin: auto;
+    }
+    .search-bars-wrapper {
+      display: flex;
+      width: 100%;
+      align-items: center;
+    }
+    .search-input {
       padding: 10px;
       border: 1px solid #ccc;
-      width: 50%;
-      margin: 0 auto;
-      display: block;
       box-sizing: border-box;
+    }
+    #reference-search {
+      width: 60%;
+    }
+    #reference-search-wrapper {
+      width: 50%;
+    }
+    #content-search-wrapper {
+      width: 60%;
+    }
+    #content-search {
+      width: 100%;
+    }
+    .clear-btn {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 18px;
+      padding-left: 10px;
     }
     #content {
       max-height: 90vh;
@@ -27,25 +54,33 @@
     }
     .verse {
       padding: 5px 0;
-      max-width:50%;
-      margin:auto;
-    }
-    .hidden {
-      display: none;
+      max-width: 50%;
+      margin: auto;
     }
   </style>
 </head>
 <body>
-  <input type="text" id="search-bar" placeholder="Search for keywords or phrases. Use & and / to search for 2 things at once." />
+
+  <div class="search-container">
+    <div id="reference-search-wrapper" class="search-bars-wrapper">
+      <input type="text" id="reference-search" class="search-input" placeholder="Search reference (e.g., Hebrews 4:12)" />
+      <button class="clear-btn" id="clear-reference-search">×</button>
+    </div>
+    
+    <div id="content-search-wrapper" class="search-bars-wrapper">
+      <input type="text" id="content-search" class="search-input" placeholder="Search for keywords or phrases. Use & and / to search for 2 things at once." />
+      <button class="clear-btn" id="clear-search-bar">×</button>
+    </div>
+  </div>
+
   <div id="content"></div>
 
   <script>
     let bibleText = [];
 
-    // Function to render verses
     const renderVerses = (verses) => {
       const content = document.getElementById('content');
-      content.innerHTML = ''; // Clear previous content
+      content.innerHTML = '';
       verses.forEach((item) => {
         const verseDiv = document.createElement('div');
         verseDiv.className = 'verse';
@@ -54,15 +89,14 @@
       });
     };
 
-    // Function to load the Bible JSON file
     const loadBibleData = async () => {
       try {
         const response = await fetch('BereanBibleText_complete.json');
         if (!response.ok) {
           throw new Error('Failed to load Bible data');
         }
-        bibleText = await response.json(); // Parse the JSON data
-        renderVerses(bibleText); // Render all verses initially
+        bibleText = await response.json();
+        renderVerses(bibleText);
       } catch (error) {
         console.error(error);
         const content = document.getElementById('content');
@@ -70,44 +104,107 @@
       }
     };
 
-    // Search functionality
-    const searchBar = document.getElementById('search-bar');
+    const searchBar = document.getElementById('content-search');
     searchBar.addEventListener('input', (e) => {
-      const query = e.target.value.trim();
+      const rawQuery = e.target.value;
+      const query = rawQuery.trim();
+      const endsWithSpace = rawQuery.endsWith(' ');
 
-      // Check if query contains '&'
-      if (query.includes(' & ')) {
-        const parts = query.split(' & ').map(part => part.toLowerCase().trim());
+      const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wordRegex = (word) => new RegExp(`\\b${escapeRegex(word)}\\b`, 'i');
+      const partialRegex = (word) => new RegExp(escapeRegex(word), 'i');
+
+      let filteredVerses = [];
+
+      if (rawQuery.includes(' & ')) {
+        const parts = rawQuery.split(' & ').map(part => part.trim());
         if (parts.length === 2) {
-          const filteredVerses = bibleText.filter((item) => 
-            item.verse.toLowerCase().includes(parts[0]) && item.verse.toLowerCase().includes(parts[1])
+          const regex1 = endsWithSpace ? wordRegex(parts[0]) : partialRegex(parts[0]);
+          const regex2 = endsWithSpace ? wordRegex(parts[1]) : partialRegex(parts[1]);
+          filteredVerses = bibleText.filter(item =>
+            regex1.test(item.verse) && regex2.test(item.verse)
           );
-          renderVerses(filteredVerses);
-          return;
         }
+      } else if (rawQuery.includes(' / ')) {
+        const parts = rawQuery.split(' / ').map(part => part.trim());
+        if (parts.length === 2) {
+          const regex1 = endsWithSpace ? wordRegex(parts[0]) : partialRegex(parts[0]);
+          const regex2 = endsWithSpace ? wordRegex(parts[1]) : partialRegex(parts[1]);
+          filteredVerses = bibleText.filter(item =>
+            regex1.test(item.verse) || regex2.test(item.verse)
+          );
+        }
+      } else if (query.length > 0) {
+        const regex = endsWithSpace ? wordRegex(query) : partialRegex(query);
+        filteredVerses = bibleText.filter(item =>
+          regex.test(item.verse)
+        );
+      } else {
+        filteredVerses = bibleText;
       }
 
-      // Check if query contains '/'
-      if (query.includes(' / ')) {
-        const parts = query.split(' / ').map(part => part.toLowerCase().trim());
-        if (parts.length === 2) {
-          const filteredVerses = bibleText.filter((item) => 
-            item.verse.toLowerCase().includes(parts[0]) || item.verse.toLowerCase().includes(parts[1])
-          );
-          renderVerses(filteredVerses);
-          return;
-        }
-      }
-
-      // Default search (single keyword/phrase)
-      const filteredVerses = bibleText.filter((item) => 
-        item.verse.toLowerCase().includes(query.toLowerCase())
-      );
       renderVerses(filteredVerses);
     });
 
-    // Load the Bible data when the page loads
-    loadBibleData();
+    const referenceSearchBar = document.getElementById('reference-search');
+
+    const bookAbbreviations = {
+      'gen': 'genesis',
+      'ex': 'exodus',
+      'lev': 'leviticus',
+      'num': 'numbers',
+      'deut': 'deuteronomy',
+      'matt': 'matthew',
+      'mk': 'mark',
+      'mrk': 'mark',
+      'luke': 'luke',
+      'jn': 'john',
+      'john': 'john',
+      'rom': 'romans',
+      '1 cor': '1 corinthians',
+      '2 cor': '2 corinthians',
+      // Add more as needed
+    };
+
+    referenceSearchBar.addEventListener('input', (e) => {
+      let input = e.target.value.trim().toLowerCase();
+
+      if (input.length === 0) {
+        renderVerses(bibleText);
+        return;
+      }
+
+      input = input.replace(/(\d)\s+(\d)/, '$1:$2');
+
+      let normalizedInput = input;
+
+      Object.entries(bookAbbreviations).forEach(([abbr, full]) => {
+        const regex = new RegExp(`^${abbr}\\b`, 'i');
+        if (regex.test(normalizedInput)) {
+          normalizedInput = normalizedInput.replace(regex, full);
+        }
+      });
+
+      const filtered = bibleText.filter(item =>
+        item.reference.toLowerCase().startsWith(normalizedInput)
+      );
+
+      renderVerses(filtered);
+    });
+
+    document.getElementById('clear-reference-search').addEventListener('click', () => {
+      referenceSearchBar.value = '';
+      renderVerses(bibleText);
+    });
+
+    document.getElementById('clear-search-bar').addEventListener('click', () => {
+      searchBar.value = '';
+      renderVerses(bibleText);
+    });
+
+    // Load data when the page is ready
+    window.addEventListener('DOMContentLoaded', loadBibleData);
   </script>
+
 </body>
 </html>
