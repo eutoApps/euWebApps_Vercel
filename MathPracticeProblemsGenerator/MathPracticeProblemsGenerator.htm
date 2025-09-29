@@ -165,17 +165,17 @@
     }
 
     function generateRandomNumber() {
-  const allowNegatives = document.getElementById("allowNegatives").checked;
-  if (allowNegatives) {
-    // -12 to -2, OR 2 to 12
-    return Math.random() < 0.5
-      ? -(Math.floor(Math.random() * 11) + 2)  // negative range
-      :  (Math.floor(Math.random() * 11) + 2); // positive range
-  } else {
-    // 2 to 12
-    return Math.floor(Math.random() * 11) + 2;
-  }
-}
+      const allowNegatives = document.getElementById("allowNegatives").checked;
+      if (allowNegatives) {
+        // -12 to -2, OR 2 to 12
+        return Math.random() < 0.5
+          ? -(Math.floor(Math.random() * 11) + 2)  // negative range
+          :  (Math.floor(Math.random() * 11) + 2); // positive range
+      } else {
+        // 2 to 12
+        return Math.floor(Math.random() * 11) + 2;
+      }
+    }
 
 
     function generateProblem() {
