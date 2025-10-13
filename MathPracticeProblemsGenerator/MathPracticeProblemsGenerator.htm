@@ -90,6 +90,8 @@
   <button onclick="checkAnswers()">Submit Answers</button>
   <button onclick="resetProblems()">New Problems</button>
 
+  <div id="score" class="result"></div>
+  
   <div class="options">
     <label><input type="checkbox" id="checkAll" onchange="toggleAll()"> Check / Uncheck All</label>
     <label><input type="checkbox" id="allowNegatives"> Include Negative Numbers</label>
@@ -102,8 +104,6 @@
       <input type="number" id="problemCount" min="1" max="200" value="50" style="width: 60px; text-align: center;">
     </label>
   </div>
-
-  <div id="score" class="result"></div>
 
   <script>
     let problems = [];
