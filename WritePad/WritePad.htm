@@ -1,111 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eutoApps WritePad</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: black;
-        }
-        #toolbar {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background-color: black;
-            height: 40px;
-            padding: 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .color-btn {
-            flex-grow: 1;
-            height: 100%;
-            border: none;
-            cursor: pointer;
-        }
-        #canvas {
-            flex-grow: 1;
-            display: block;
-            background-color: black;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eutoApps WritePad</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: black;
+    }
+    #toolbar {
+      display: flex;
+      align-items: center;
+      background-color: black;
+      height: 40px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .color-btn {
+      flex: 1;
+      height: 100%;
+      border: none;
+      cursor: pointer;
+    }
+    #thickness {
+      flex: 1;
+      margin: 0 10px;
+    }
+    #canvas {
+      flex-grow: 1;
+      display: block;
+      background-color: #2C2525;
+      cursor: crosshair;
+      touch-action: none; /* important for stylus/touch */
+    }
+  </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div id="toolbar">
-        <button id="clear" class="color-btn" style="background-color: white;">CLEAR</button>
-        <button class="color-btn" style="background-color: black;" onclick="changeColor('black')"></button>
-        <button class="color-btn" style="background-color: white;" onclick="changeColor('white')"></button>
-        <button class="color-btn" style="background-color: brown;" onclick="changeColor('brown')"></button>
-        <button class="color-btn" style="background-color: green;" onclick="changeColor('green')"></button>
-        <button class="color-btn" style="background-color: lightblue;" onclick="changeColor('lightblue')"></button>
-        <button class="color-btn" style="background-color: orange;" onclick="changeColor('orange')"></button>
-    </div>
+  <canvas id="canvas"></canvas>
+  <div id="toolbar">
+    <button id="clear" class="color-btn" style="background-color: white;">C</button>
+    <button id="eraser" class="color-btn" style="background-color: gray;">E</button>
+    
+    <button class="color-btn" style="background-color: white;" onclick="changeColor('white')"></button>
+    <button class="color-btn" style="background-color: brown;" onclick="changeColor('brown')"></button>
+    <button class="color-btn" style="background-color: green;" onclick="changeColor('green')"></button>
+    <button class="color-btn" style="background-color: lightblue;" onclick="changeColor('lightblue')"></button>
+    <button class="color-btn" style="background-color: orange;" onclick="changeColor('orange')"></button>
+   <!-- <input type="range" id="thickness" min="1" max="20" value="3"> -->
+  </div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - 40; // Account for toolbar height
+ <script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-        let drawing = false;
-        let color = 'white';
-        let lineWidth = 5;
+function resizeCanvas() {
+  const tmp = document.createElement("canvas");
+  tmp.width = canvas.width;
+  tmp.height = canvas.height;
+  tmp.getContext("2d").drawImage(canvas, 0, 0);
+  canvas.width = innerWidth;
+  canvas.height = innerHeight - 40;
+  ctx.drawImage(tmp, 0, 0);
+}
+resizeCanvas();
+addEventListener("resize", resizeCanvas);
 
-        canvas.addEventListener('mousedown', (e) => {
-            drawing = true;
-            ctx.beginPath();
-            ctx.moveTo(e.clientX, e.clientY); // Adjust for toolbar height
-        });
+let drawing = false;
+let color = "white";
+let baseWidth = 2.5;
+let erasing = false;
+let lastTime = 0;
+let lastX = 0,
+  lastY = 0;
+let lastLineWidth = baseWidth;
+let points = [];
+let firstMove = true;
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (!drawing) return;
+// --- helpers ---
+function dist(a, b) {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+function getLineWidth(v) {
+  const minW = 1.5,
+    maxW = 2.5,
+    minV = 0.1,
+    maxV = 3;
+  v = Math.min(Math.max(v, minV), maxV);
+  const width = maxW - ((v - minV) / (maxV - minV)) * (maxW - minW);
+  const smooth = 0.3;
+  lastLineWidth = lastLineWidth * (1 - smooth) + width * smooth;
+  return lastLineWidth;
+}
 
-            if (color === 'black') {
-                ctx.lineWidth = 40; // Eraser thickness
-            } else {
-                ctx.lineWidth = lineWidth;
-            }
+// --- drawing ---
+function startDrawing(e) {
+  drawing = true;
+  firstMove = true;
+  points = [];
+  lastTime = Date.now();
+  lastX = e.clientX;
+  lastY = e.clientY;
+  points.push({ x: lastX, y: lastY, t: lastTime });
 
-            ctx.lineTo(e.clientX, e.clientY); // Adjust for toolbar height
-            ctx.strokeStyle = color;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-        });
+  // mark starting point
+  ctx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, baseWidth / 2, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
 
-        canvas.addEventListener('mouseup', () => {
-            drawing = false;
-        });
+function draw(e) {
+  if (!drawing) return;
 
-        canvas.addEventListener('mouseleave', () => {
-            drawing = false;
-        });
+  const now = Date.now();
+  const p = { x: e.clientX, y: e.clientY, t: now };
+  const prev = points[points.length - 1];
+  const velocity = dist(prev, p) / (now - prev.t || 1);
+  const lw = getLineWidth(velocity);
 
-        document.getElementById('clear').addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            color = 'white';
-        });
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = color;
+  ctx.lineWidth = erasing ? 40 : lw; // the 40 is just for the eraser's size
+  ctx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
 
-        function changeColor(newColor) {
-            color = newColor;
-        }
+  // On very first move, draw a simple line to guarantee connection
+  if (firstMove) {
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    firstMove = false;
+    points.push(p);
+    return;
+  }
 
-        // Resize canvas when the window is resized
-        window.addEventListener('resize', () => {
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - 40;
-            ctx.putImageData(imgData, 0, 0);
-        });
-    </script>
+  points.push(p);
+  if (points.length < 3) return;
+
+  const i = points.length - 3;
+  const p1 = points[i],
+    p2 = points[i + 1],
+    p3 = points[i + 2];
+  const m1 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  const m2 = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
+
+  ctx.beginPath();
+  ctx.moveTo(m1.x, m1.y);
+  ctx.quadraticCurveTo(p2.x, p2.y, m2.x, m2.y);
+  ctx.stroke();
+}
+
+function stopDrawing() {
+  drawing = false;
+  points = [];
+}
+
+canvas.addEventListener("pointerdown", startDrawing);
+canvas.addEventListener("pointermove", draw);
+canvas.addEventListener("pointerup", stopDrawing);
+canvas.addEventListener("pointerleave", stopDrawing);
+
+// toolbar
+document.getElementById("clear").addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  color = "white";
+  erasing = false;
+});
+document.getElementById("eraser").addEventListener("click", () => {
+  erasing = true;
+});
+function changeColor(c) {
+  color = c;
+  erasing = false;
+}
+</script>
+
+
+
+
 </body>
 </html>
